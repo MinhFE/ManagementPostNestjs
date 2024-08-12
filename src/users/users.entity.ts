@@ -2,7 +2,7 @@ import { BaseEntityPost } from 'src/baseEntity';
 import { Column, Entity } from 'typeorm';
 
 @Entity()
-export class UserEntity extends BaseEntityPost {
+export class User extends BaseEntityPost {
   @Column({
     unique: true,
   })

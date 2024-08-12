@@ -1,22 +1,31 @@
-import * as bcrypt from "bcrypt"
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { UserEntity } from 'src/auth/entities/user.entity';
-import { Repository } from 'typeorm';
-import { CreateUserDto } from 'src/auth/dto/auth.dto';
+import * as bcrypt from 'bcrypt';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { LoginUserDto } from 'src/auth/dto/auth.dto';
+import { UsersService } from 'src/users/users.service';
+import { CreateUserDto } from 'src/users/dto/users.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(UserEntity) private userService: Repository<UserEntity>,
+    private userService: UsersService,
+    private jwtService: JwtService,
   ) {}
 
-  async register(userBody: CreateUserDto): Promise<void> {
-    userBody.password = bcrypt.hashSync(userBody.password, 10);
-    try {
-      await this.userService.insert(userBody);
-    } catch (error) {
-      throw new Error(error);
+  register(registerBody: CreateUserDto) {
+    return this.userService.createUser(registerBody);
+  }
+
+  async login(userBody: LoginUserDto) {
+    const user = await this.userService.findUserByEmailOrId(userBody.email);
+
+    if (!bcrypt.compareSync(userBody.password, user.password)) {
+      throw new UnauthorizedException();
     }
+
+    const payloadJWT = { sub: user.id, email: user.email };
+    return {
+      access_token: await this.jwtService.signAsync(payloadJWT),
+    };
   }
 }
