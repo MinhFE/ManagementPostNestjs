@@ -16,7 +16,7 @@ export class AuthService {
     return this.userService.createUser(registerBody);
   }
 
-  async login(userBody: LoginUserDto) {
+  async login(userBody: LoginUserDto): Promise<{ access_token: string }> {
     const user = await this.userService.findUserByEmailOrId(userBody.email);
 
     if (!bcrypt.compareSync(userBody.password, user.password)) {
